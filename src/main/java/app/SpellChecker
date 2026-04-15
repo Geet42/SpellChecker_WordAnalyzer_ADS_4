@@ -1,0 +1,207 @@
+package app;
+
+import adt.*;
+import hashtable.HashTableSC;
+import hashtable.HashTableOA;
+import skiplist.SkipListMap;
+
+import java.util.List;
+
+/**
+ * Application: Spell Checker and Word Frequency Analyzer
+ *
+ * Theoretical problem solved:
+ * Given a dictionary of valid words and a document, efficiently identify
+ * misspelled words and compute word frequency statistics. This requires
+ * fast membership testing (Set ADT backed by Hash Table) and counting
+ * (Multiset ADT backed by Hash Table).
+ *
+ * Without hashing, checking if each word is in a dictionary of D words
+ * takes O(D) per word using a List-Based Map, giving O(n * D) total.
+ * With a Hash Table, each lookup is O(1) average, giving O(n + D) total.
+ *
+ * This demonstrates how Hash Tables solve the dictionary lookup problem
+ * and how the Adaptor Pattern lets us build Set, Multiset, and Multimap
+ * from a single Map implementation.
+ */
+public class SpellChecker {
+
+    public static void main(String[] args) {
+        System.out.println("============================================================");
+        System.out.println("   Spell Checker & Word Frequency Analyzer");
+        System.out.println("   Using Hash Tables, Skip Lists, and ADTs");
+        System.out.println("   COMP47500 - Assignment 4: Hashing");
+        System.out.println("   Group: Geet, Muskaan, Shridhar");
+        System.out.println("============================================================\n");
+
+        // ---- Build dictionary using Set ADT (backed by Hash Table) ----
+        System.out.println(">> Building Dictionary (Set ADT backed by HashTableSC)\n");
+
+        String[] dictionaryWords = {
+            "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+            "have", "has", "had", "do", "does", "did", "will", "shall", "should",
+            "may", "might", "must", "can", "could", "would", "of", "in", "to",
+            "for", "with", "on", "at", "from", "by", "about", "as", "into",
+            "through", "during", "before", "after", "above", "below", "between",
+            "hash", "table", "map", "set", "list", "tree", "graph", "queue",
+            "stack", "array", "linked", "binary", "search", "sort", "insert",
+            "delete", "find", "key", "value", "entry", "bucket", "chain",
+            "probe", "collision", "load", "factor", "function", "code",
+            "compression", "division", "method", "algorithm", "data", "structure",
+            "computer", "science", "student", "university", "college", "dublin",
+            "skip", "node", "level", "random", "expected", "average", "worst",
+            "case", "time", "space", "complexity", "constant", "linear",
+            "logarithmic", "polynomial", "efficient", "performance", "this",
+            "that", "it", "not", "but", "and", "or", "if", "then", "else",
+            "each", "every", "all", "some", "any", "no", "more", "most",
+            "other", "new", "old", "large", "small", "good", "bad",
+            "open", "addressing", "separate", "chaining", "hashing", "rehashing"
+        };
+
+        // Build Set backed by HashTableSC
+        SetADT<String> dictionary = new SetADT<>(
+            new HashTableSC<>(64, 0.75, HashTableSC.CompressionMethod.MAD)
+        );
+        for (String word : dictionaryWords) {
+            dictionary.add(word.toLowerCase());
+        }
+        System.out.println("Dictionary loaded: " + dictionary.size() + " words\n");
+
+        // ---- Spell check a document ----
+        System.out.println(">> Spell Checking a Document\n");
+
+        String document = "The hash tabel provides constant time avrage case lookups. "
+                + "Each entry stores a key and value pair. "
+                + "Collisions are handeld using separate chaning or open addressing. "
+                + "The load factor determins when rehashing is needed. "
+                + "Skip lists use randomized algoritms for expected logarithmic search. "
+                + "A multiset allows duplicat elements with counts.";
+
+        System.out.println("Document: \"" + document + "\"\n");
+
+        String[] words = document.toLowerCase().replaceAll("[^a-z\\s]", "").split("\\s+");
+
+        // Find misspelled words using Set membership test
+        SetADT<String> misspelled = new SetADT<>(
+            new HashTableSC<>(16, 0.75, HashTableSC.CompressionMethod.DIVISION)
+        );
+
+        for (String word : words) {
+            if (!dictionary.contains(word)) {
+                misspelled.add(word);
+            }
+        }
+
+        System.out.println("Misspelled words found: " + misspelled.elements());
+        System.out.println("Count: " + misspelled.size() + "\n");
+
+        // ---- Word Frequency using Multiset ADT ----
+        System.out.println(">> Word Frequency Analysis (Multiset ADT backed by HashTableSC)\n");
+
+        Multiset<String> wordFreq = new Multiset<>(
+            new HashTableSC<>(32, 0.75, HashTableSC.CompressionMethod.MAD)
+        );
+
+        for (String word : words) {
+            wordFreq.add(word);
+        }
+
+        System.out.println("Total words: " + wordFreq.size());
+        System.out.println("Distinct words: " + wordFreq.distinctCount());
+        System.out.println("\nFrequencies (words appearing more than once):");
+        for (String word : wordFreq.distinctElements()) {
+            int count = wordFreq.count(word);
+            if (count > 1) {
+                System.out.println("  \"" + word + "\" -> " + count);
+            }
+        }
+
+        // ---- Multimap: group words by first letter ----
+        System.out.println("\n>> Grouping Words by First Letter (Multimap ADT backed by HashTableSC)\n");
+
+        Multimap<Character, String> byLetter = new Multimap<>(
+            new HashTableSC<>(16, 0.75, HashTableSC.CompressionMethod.DIVISION)
+        );
+
+        for (String word : wordFreq.distinctElements()) {
+            byLetter.put(word.charAt(0), word);
+        }
+
+        for (Character c : byLetter.keySet()) {
+            List<String> group = byLetter.get(c);
+            System.out.println("  '" + c + "' -> " + group);
+        }
+
+        // ---- Set Operations ----
+        System.out.println("\n>> Set Operations Demo\n");
+
+        SetADT<String> setA = new SetADT<>(
+            new HashTableSC<>(16, 0.75, HashTableSC.CompressionMethod.DIVISION)
+        );
+        SetADT<String> setB = new SetADT<>(
+            new HashTableSC<>(16, 0.75, HashTableSC.CompressionMethod.DIVISION)
+        );
+
+        String[] wordsA = {"hash", "table", "map", "set", "list", "tree"};
+        String[] wordsB = {"map", "set", "graph", "queue", "stack", "list"};
+
+        for (String w : wordsA) setA.add(w);
+        for (String w : wordsB) setB.add(w);
+
+        System.out.println("Set A: " + setA);
+        System.out.println("Set B: " + setB);
+
+        SetADT<String> union = setA.union(setB,
+            new HashTableSC<>(16, 0.75, HashTableSC.CompressionMethod.DIVISION));
+        SetADT<String> intersection = setA.intersection(setB,
+            new HashTableSC<>(16, 0.75, HashTableSC.CompressionMethod.DIVISION));
+        SetADT<String> difference = setA.difference(setB,
+            new HashTableSC<>(16, 0.75, HashTableSC.CompressionMethod.DIVISION));
+
+        System.out.println("A union B: " + union);
+        System.out.println("A intersect B: " + intersection);
+        System.out.println("A - B: " + difference);
+
+        // ---- Compare backing implementations ----
+        System.out.println("\n>> Adaptor Pattern: Same Set ADT, Different Backing Maps\n");
+
+        // Set backed by ListBasedMap
+        long start = System.nanoTime();
+        SetADT<String> setList = new SetADT<>(new ListBasedMap<>());
+        for (String w : dictionaryWords) setList.add(w);
+        for (String w : words) setList.contains(w);
+        long listTime = (System.nanoTime() - start) / 1000;
+
+        // Set backed by HashTableSC
+        start = System.nanoTime();
+        SetADT<String> setSC = new SetADT<>(
+            new HashTableSC<>(64, 0.75, HashTableSC.CompressionMethod.DIVISION));
+        for (String w : dictionaryWords) setSC.add(w);
+        for (String w : words) setSC.contains(w);
+        long scTime = (System.nanoTime() - start) / 1000;
+
+        // Set backed by HashTableOA (Linear Probing)
+        start = System.nanoTime();
+        SetADT<String> setOA = new SetADT<>(
+            new HashTableOA<>(64, 0.5, HashTableOA.ProbingMethod.LINEAR_PROBING));
+        for (String w : dictionaryWords) setOA.add(w);
+        for (String w : words) setOA.contains(w);
+        long oaTime = (System.nanoTime() - start) / 1000;
+
+        // Set backed by SkipListMap
+        start = System.nanoTime();
+        SetADT<String> setSkip = new SetADT<>(new SkipListMap<String, Boolean>());
+        for (String w : dictionaryWords) setSkip.add(w);
+        for (String w : words) setSkip.contains(w);
+        long skipTime = (System.nanoTime() - start) / 1000;
+
+        System.out.println(String.format("%-25s %10s", "Backing Map", "Time (us)"));
+        System.out.println("-".repeat(37));
+        System.out.println(String.format("%-25s %10d", "ListBasedMap", listTime));
+        System.out.println(String.format("%-25s %10d", "HashTableSC (Division)", scTime));
+        System.out.println(String.format("%-25s %10d", "HashTableOA (Linear)", oaTime));
+        System.out.println(String.format("%-25s %10d", "SkipListMap", skipTime));
+
+        System.out.println("\nDone.");
+    }
+}
